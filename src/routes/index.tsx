@@ -1,12 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { useState } from "react";
+import { Sidebar, type SectionKey } from "@/components/layout/Sidebar";
 import { TopHeader } from "@/components/layout/TopHeader";
-import { UploadCard } from "@/components/dashboard/UploadCard";
-import { AnalysisOptions } from "@/components/dashboard/AnalysisOptions";
-import { ContentAnalysis } from "@/components/dashboard/ContentAnalysis";
-import { PromptOutput } from "@/components/dashboard/PromptOutput";
-import { HistoryStrip } from "@/components/dashboard/HistoryStrip";
+import { SectionHeader } from "@/components/views/SectionHeader";
+import { DashboardView } from "@/components/views/DashboardView";
+import { GenerarPromptView } from "@/components/views/GenerarPromptView";
+import { GenerarImagenView } from "@/components/views/GenerarImagenView";
+import { GenerarVideoView } from "@/components/views/GenerarVideoView";
+import { HistorialView } from "@/components/views/HistorialView";
+import { FavoritosView } from "@/components/views/FavoritosView";
+import { ConfiguracionView } from "@/components/views/ConfiguracionView";
+import { AyudaView } from "@/components/views/AyudaView";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,41 +26,60 @@ export const Route = createFileRoute("/")({
   component: DashboardPage,
 });
 
-const fade = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
+const headers: Record<SectionKey, { title: string; subtitle: string }> = {
+  dashboard: {
+    title: "Dashboard",
+    subtitle: "Resumen general de tu actividad creativa.",
+  },
+  "generar-prompt": {
+    title: "Generar Prompt",
+    subtitle: "Sube una imagen o video y obtén el prompt perfecto.",
+  },
+  "generar-imagen": {
+    title: "Generar Imagen",
+    subtitle: "Crea imágenes desde texto con los mejores modelos.",
+  },
+  "generar-video": {
+    title: "Generar Video",
+    subtitle: "Anima imágenes o crea videos cinematográficos.",
+  },
+  historial: {
+    title: "Historial",
+    subtitle: "Todos tus prompts, imágenes y videos generados.",
+  },
+  favoritos: {
+    title: "Favoritos",
+    subtitle: "Tus prompts guardados para reutilizar.",
+  },
+  configuracion: {
+    title: "Configuración",
+    subtitle: "Personaliza modelos, idioma y preferencias.",
+  },
+  ayuda: {
+    title: "Ayuda",
+    subtitle: "Guías rápidas y respuestas a tus dudas.",
+  },
 };
 
 function DashboardPage() {
+  const [active, setActive] = useState<SectionKey>("dashboard");
+
   return (
     <div className="min-h-screen w-full flex text-white">
-      <Sidebar />
+      <Sidebar active={active} onChange={setActive} />
       <main className="flex-1 min-w-0 px-4 lg:px-6 pb-10 pt-2">
         <TopHeader />
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_1.18fr] gap-5">
-          {/* Left column */}
-          <div className="flex flex-col gap-5">
-            <motion.div {...fade} transition={{ duration: 0.4 }}>
-              <UploadCard />
-            </motion.div>
-            <motion.div {...fade} transition={{ duration: 0.4, delay: 0.08 }}>
-              <AnalysisOptions />
-            </motion.div>
-          </div>
-
-          {/* Right column */}
-          <div className="flex flex-col gap-5">
-            <motion.div {...fade} transition={{ duration: 0.4, delay: 0.05 }}>
-              <ContentAnalysis />
-            </motion.div>
-            <motion.div {...fade} transition={{ duration: 0.4, delay: 0.12 }}>
-              <PromptOutput />
-            </motion.div>
-            <motion.div {...fade} transition={{ duration: 0.4, delay: 0.18 }}>
-              <HistoryStrip />
-            </motion.div>
-          </div>
-        </div>
+        {active !== "generar-prompt" && (
+          <SectionHeader title={headers[active].title} subtitle={headers[active].subtitle} />
+        )}
+        {active === "dashboard" && <DashboardView onNavigate={setActive} />}
+        {active === "generar-prompt" && <GenerarPromptView />}
+        {active === "generar-imagen" && <GenerarImagenView />}
+        {active === "generar-video" && <GenerarVideoView />}
+        {active === "historial" && <HistorialView />}
+        {active === "favoritos" && <FavoritosView />}
+        {active === "configuracion" && <ConfiguracionView />}
+        {active === "ayuda" && <AyudaView />}
       </main>
     </div>
   );

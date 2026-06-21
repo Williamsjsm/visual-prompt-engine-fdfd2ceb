@@ -9,22 +9,38 @@ import {
   HelpCircle,
   ChevronDown,
   Moon,
+  type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
 import avatarImg from "@/assets/avatar.jpg";
 
-const items = [
-  { label: "Dashboard", icon: Home, active: true },
-  { label: "Generar Prompt", icon: Sparkles },
-  { label: "Generar Imagen", icon: ImageIcon },
-  { label: "Generar Video", icon: Video },
-  { label: "Historial", icon: History },
-  { label: "Favoritos", icon: Star },
-  { label: "Configuración", icon: Settings },
-  { label: "Ayuda", icon: HelpCircle },
+export type SectionKey =
+  | "dashboard"
+  | "generar-prompt"
+  | "generar-imagen"
+  | "generar-video"
+  | "historial"
+  | "favoritos"
+  | "configuracion"
+  | "ayuda";
+
+const items: { key: SectionKey; label: string; icon: LucideIcon }[] = [
+  { key: "dashboard", label: "Dashboard", icon: Home },
+  { key: "generar-prompt", label: "Generar Prompt", icon: Sparkles },
+  { key: "generar-imagen", label: "Generar Imagen", icon: ImageIcon },
+  { key: "generar-video", label: "Generar Video", icon: Video },
+  { key: "historial", label: "Historial", icon: History },
+  { key: "favoritos", label: "Favoritos", icon: Star },
+  { key: "configuracion", label: "Configuración", icon: Settings },
+  { key: "ayuda", label: "Ayuda", icon: HelpCircle },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  active: SectionKey;
+  onChange: (key: SectionKey) => void;
+}
+
+export function Sidebar({ active, onChange }: SidebarProps) {
   const [dark, setDark] = useState(true);
   return (
     <aside className="hidden lg:flex w-[260px] shrink-0 flex-col gap-6 p-5">
@@ -43,20 +59,24 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex flex-col gap-1.5">
-        {items.map((it) => (
-          <button
-            key={it.label}
-            className={
-              "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[14px] font-medium transition-all " +
-              (it.active
-                ? "text-white bg-gradient-to-r from-[#5b5eff]/80 via-[#7c4dff]/80 to-[#3b82f6]/70 shadow-[0_10px_30px_-12px_rgba(124,77,255,0.9)] ring-1 ring-white/10"
-                : "text-slate-400 hover:text-white hover:bg-white/[0.04]")
-            }
-          >
-            <it.icon className="h-[18px] w-[18px]" />
-            {it.label}
-          </button>
-        ))}
+        {items.map((it) => {
+          const isActive = it.key === active;
+          return (
+            <button
+              key={it.key}
+              onClick={() => onChange(it.key)}
+              className={
+                "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[14px] font-medium transition-all text-left " +
+                (isActive
+                  ? "text-white bg-gradient-to-r from-[#5b5eff]/80 via-[#7c4dff]/80 to-[#3b82f6]/70 shadow-[0_10px_30px_-12px_rgba(124,77,255,0.9)] ring-1 ring-white/10"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]")
+              }
+            >
+              <it.icon className="h-[18px] w-[18px]" />
+              {it.label}
+            </button>
+          );
+        })}
       </nav>
 
       <div className="mt-auto flex flex-col gap-3">
