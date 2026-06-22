@@ -174,13 +174,18 @@ export function PromptProvider({ children }: { children: ReactNode }) {
       return;
     }
     setStatus("analyzing");
-    // Simulate AI latency. Swap this for a real Gemini/GPT Vision call.
-    await new Promise((r) => setTimeout(r, 1200));
 
-    const preset = pickPreset(upload.name);
-    const built = buildPrompts(preset.base, mode, upload.kind);
-    setAnalysis(preset.analysis);
-    setPrompts(built);
+    const analyzer =
+      model === "gem"
+        ? analyzeWithGemini
+        : model === "cla"
+          ? analyzeWithClaude
+          : analyzeWithOpenAI;
+
+    const result = await analyzer(upload, { mode });
+
+    setAnalysis(result.analysis);
+    setPrompts(result.prompts);
     setStatus("ready");
 
     const item: HistoryItem = {
@@ -189,11 +194,11 @@ export function PromptProvider({ children }: { children: ReactNode }) {
       date: nowLabel(),
       type: upload.kind === "video" ? "Video" : "Imagen",
       img: upload.url,
-      analysis: preset.analysis,
-      prompts: built,
+      analysis: result.analysis,
+      prompts: result.prompts,
     };
     setHistory((h) => [item, ...h].slice(0, 24));
-  }, [upload, mode]);
+  }, [upload, mode, model]);
 
   const value = useMemo<Ctx>(
     () => ({
