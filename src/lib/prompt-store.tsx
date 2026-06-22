@@ -7,6 +7,11 @@ import {
   type ReactNode,
 } from "react";
 import templeImg from "@/assets/temple.jpg";
+import {
+  analyzeWithClaude,
+  analyzeWithGemini,
+  analyzeWithOpenAI,
+} from "@/lib/ai/prompt-analyzer";
 
 export type AnalysisMode = "max" | "bal" | "cre" | "short";
 export type AiModel = "gpt" | "gem" | "cla";
