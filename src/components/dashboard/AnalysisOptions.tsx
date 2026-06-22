@@ -1,22 +1,24 @@
-import { Star, Scale, Lightbulb, AlignLeft, ChevronDown, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Star, Scale, Lightbulb, AlignLeft, ChevronDown, Sparkles, Loader2 } from "lucide-react";
+import { usePromptStore, type AnalysisMode, type AiModel } from "@/lib/prompt-store";
 
-const opts = [
+const opts: { id: AnalysisMode; label: string; icon: typeof Star }[] = [
   { id: "max", label: "Detalle Máximo", icon: Star },
   { id: "bal", label: "Equilibrado", icon: Scale },
   { id: "cre", label: "Creativo", icon: Lightbulb },
   { id: "short", label: "Prompt Corto", icon: AlignLeft },
 ];
 
-const models = [
+const models: { id: AiModel; label: string; dot: string }[] = [
   { id: "gpt", label: "GPT Vision", dot: "bg-emerald-400" },
   { id: "gem", label: "Gemini Vision", dot: "bg-sky-400" },
   { id: "cla", label: "Claude Vision", dot: "bg-orange-400" },
 ];
 
 export function AnalysisOptions() {
-  const [opt, setOpt] = useState("max");
-  const [model, setModel] = useState("gpt");
+  const { mode, setMode, model, setModel, status, upload, generate } = usePromptStore();
+  const analyzing = status === "analyzing";
+  const disabled = !upload || analyzing;
+
   return (
     <section className="glass-panel p-5">
       <h2 className="text-[15px] font-semibold text-white">
@@ -26,11 +28,11 @@ export function AnalysisOptions() {
 
       <div className="mt-4 grid grid-cols-4 gap-2.5">
         {opts.map((o) => {
-          const active = opt === o.id;
+          const active = mode === o.id;
           return (
             <button
               key={o.id}
-              onClick={() => setOpt(o.id)}
+              onClick={() => setMode(o.id)}
               className={
                 "flex flex-col items-center justify-center gap-1.5 rounded-xl px-2 py-3 text-[11.5px] font-medium transition-all " +
                 (active
@@ -70,10 +72,32 @@ export function AnalysisOptions() {
         </div>
       </div>
 
-      <button className="btn-gradient mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-[14px] font-semibold">
-        <Sparkles className="h-4 w-4" />
-        Generar Prompt
+      <button
+        onClick={generate}
+        disabled={disabled}
+        className={
+          "btn-gradient mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-[14px] font-semibold transition-opacity " +
+          (disabled ? "opacity-60 cursor-not-allowed" : "hover:opacity-95")
+        }
+      >
+        {analyzing ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Analizando contenido…
+          </>
+        ) : (
+          <>
+            <Sparkles className="h-4 w-4" />
+            Generar Prompt
+          </>
+        )}
       </button>
+
+      {!upload && (
+        <p className="mt-2 text-center text-[11.5px] text-slate-500">
+          Sube una imagen o video para generar.
+        </p>
+      )}
     </section>
   );
 }

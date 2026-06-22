@@ -1,17 +1,65 @@
-import { History, Copy, Pencil, Files, Trash2 } from "lucide-react";
+import { History, Copy, Pencil, Files, Trash2, Check } from "lucide-react";
+import { useState } from "react";
 import templeImg from "@/assets/temple.jpg";
 import castleImg from "@/assets/castle.jpg";
 import mountainImg from "@/assets/mountain.jpg";
 import cyberpunkImg from "@/assets/cyberpunk.jpg";
+import { usePromptStore, type HistoryItem } from "@/lib/prompt-store";
 
-const items = [
-  { title: "Templo japonés de noche", date: "Hoy, 10:45 AM", img: templeImg },
-  { title: "Castillo medieval", date: "Hoy, 09:32 AM", img: castleImg },
-  { title: "Amanecer en la montaña", date: "Ayer, 08:15 PM", img: mountainImg },
-  { title: "Ciudad futurista cyberpunk", date: "Ayer, 06:42 PM", img: cyberpunkImg },
+const seed: HistoryItem[] = [
+  {
+    id: "s1",
+    title: "Templo japonés de noche",
+    date: "Hoy, 10:45 AM",
+    type: "Imagen",
+    img: templeImg,
+    analysis: {} as never,
+    prompts: { principal: "traditional Japanese temple at night" } as never,
+  },
+  {
+    id: "s2",
+    title: "Castillo medieval",
+    date: "Hoy, 09:32 AM",
+    type: "Imagen",
+    img: castleImg,
+    analysis: {} as never,
+    prompts: { principal: "medieval castle on a cliff at sunset" } as never,
+  },
+  {
+    id: "s3",
+    title: "Amanecer en la montaña",
+    date: "Ayer, 08:15 PM",
+    type: "Imagen",
+    img: mountainImg,
+    analysis: {} as never,
+    prompts: { principal: "snowy mountains at sunrise" } as never,
+  },
+  {
+    id: "s4",
+    title: "Ciudad futurista cyberpunk",
+    date: "Ayer, 06:42 PM",
+    type: "Imagen",
+    img: cyberpunkImg,
+    analysis: {} as never,
+    prompts: { principal: "futuristic cyberpunk city, neon lights" } as never,
+  },
 ];
 
 export function HistoryStrip() {
+  const { history } = usePromptStore();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const items = [...history, ...seed].slice(0, 4);
+
+  const copy = async (it: HistoryItem) => {
+    try {
+      await navigator.clipboard.writeText(it.prompts.principal);
+      setCopiedId(it.id);
+      setTimeout(() => setCopiedId(null), 1200);
+    } catch {
+      /* no-op */
+    }
+  };
+
   return (
     <section className="glass-panel p-5">
       <div className="flex items-center justify-between mb-4">
@@ -27,7 +75,7 @@ export function HistoryStrip() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {items.map((it) => (
           <div
-            key={it.title}
+            key={it.id}
             className="glass-inset flex items-center gap-3 p-2.5 hover:bg-white/[0.04] transition-colors"
           >
             <img
@@ -40,7 +88,14 @@ export function HistoryStrip() {
               <div className="truncate text-[12.5px] font-medium text-white">{it.title}</div>
               <div className="text-[11px] text-slate-400">{it.date}</div>
               <div className="mt-1.5 flex items-center gap-2.5 text-slate-500">
-                <Copy className="h-3.5 w-3.5 hover:text-white cursor-pointer" />
+                {copiedId === it.id ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                ) : (
+                  <Copy
+                    className="h-3.5 w-3.5 hover:text-white cursor-pointer"
+                    onClick={() => copy(it)}
+                  />
+                )}
                 <Pencil className="h-3.5 w-3.5 hover:text-white cursor-pointer" />
                 <Files className="h-3.5 w-3.5 hover:text-white cursor-pointer" />
                 <Trash2 className="h-3.5 w-3.5 text-rose-400/80 hover:text-rose-300 cursor-pointer" />
