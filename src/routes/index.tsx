@@ -11,6 +11,7 @@ import { HistorialView } from "@/components/views/HistorialView";
 import { FavoritosView } from "@/components/views/FavoritosView";
 import { ConfiguracionView } from "@/components/views/ConfiguracionView";
 import { AyudaView } from "@/components/views/AyudaView";
+import { PromptProvider } from "@/lib/prompt-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,22 +66,24 @@ function DashboardPage() {
   const [active, setActive] = useState<SectionKey>("dashboard");
 
   return (
-    <div className="min-h-screen w-full flex text-white">
-      <Sidebar active={active} onChange={setActive} />
-      <main className="flex-1 min-w-0 px-4 lg:px-6 pb-10 pt-2">
-        <TopHeader />
-        {active !== "generar-prompt" && (
-          <SectionHeader title={headers[active].title} subtitle={headers[active].subtitle} />
-        )}
-        {active === "dashboard" && <DashboardView onNavigate={setActive} />}
-        {active === "generar-prompt" && <GenerarPromptView />}
-        {active === "generar-imagen" && <GenerarImagenView />}
-        {active === "generar-video" && <GenerarVideoView />}
-        {active === "historial" && <HistorialView />}
-        {active === "favoritos" && <FavoritosView />}
-        {active === "configuracion" && <ConfiguracionView />}
-        {active === "ayuda" && <AyudaView />}
-      </main>
-    </div>
+    <PromptProvider>
+      <div className="min-h-screen w-full flex text-white">
+        <Sidebar active={active} onChange={setActive} />
+        <main className="flex-1 min-w-0 px-4 lg:px-6 pb-10 pt-2">
+          <TopHeader />
+          {active !== "generar-prompt" && (
+            <SectionHeader title={headers[active].title} subtitle={headers[active].subtitle} />
+          )}
+          {active === "dashboard" && <DashboardView onNavigate={setActive} />}
+          {active === "generar-prompt" && <GenerarPromptView />}
+          {active === "generar-imagen" && <GenerarImagenView />}
+          {active === "generar-video" && <GenerarVideoView />}
+          {active === "historial" && <HistorialView />}
+          {active === "favoritos" && <FavoritosView />}
+          {active === "configuracion" && <ConfiguracionView />}
+          {active === "ayuda" && <AyudaView />}
+        </main>
+      </div>
+    </PromptProvider>
   );
 }
