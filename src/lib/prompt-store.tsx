@@ -178,8 +178,8 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     const analyzer =
       model === "gem"
         ? analyzeWithGemini
-        : model === "cla"
-          ? analyzeWithClaude
+        : model === "both"
+          ? analyzeCombined
           : analyzeWithOpenAI;
 
     const result = await analyzer(upload, { mode });
