@@ -9,9 +9,9 @@ const opts: { id: AnalysisMode; label: string; icon: typeof Star }[] = [
 ];
 
 const models: { id: AiModel; label: string; dot: string }[] = [
-  { id: "gpt", label: "GPT Vision", dot: "bg-emerald-400" },
   { id: "gem", label: "Gemini Vision", dot: "bg-sky-400" },
-  { id: "cla", label: "Claude Vision", dot: "bg-orange-400" },
+  { id: "gpt", label: "GPT Vision", dot: "bg-emerald-400" },
+  { id: "both", label: "Gemini + GPT", dot: "bg-gradient-to-r from-sky-400 to-emerald-400" },
 ];
 
 export function AnalysisOptions() {
@@ -59,7 +59,7 @@ export function AnalysisOptions() {
                 className={
                   "flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-medium transition-all " +
                   (active
-                    ? "text-white bg-white/[0.06] ring-1 ring-[#7c4dff]/50"
+                    ? "text-white bg-gradient-to-br from-[#7c4dff]/25 to-[#3b82f6]/15 ring-1 ring-[#7c4dff]/60 shadow-[0_10px_30px_-15px_rgba(124,77,255,0.9)]"
                     : "text-slate-300 bg-white/[0.03] ring-1 ring-white/5 hover:bg-white/[0.06]")
                 }
               >
