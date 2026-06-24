@@ -53,10 +53,19 @@ export type HistoryItem = {
   id: string;
   title: string;
   date: string;
+  createdAt: number;
   type: "Imagen" | "Video" | "Prompt";
   img: string;
+  model: AiModel;
+  score: number;
   analysis: AnalysisFields;
   prompts: Prompts;
+};
+
+export const MODEL_LABEL: Record<AiModel, string> = {
+  gpt: "GPT",
+  gem: "Gemini",
+  both: "Gemini + GPT",
 };
 
 export type UploadInfo = {
