@@ -9,9 +9,9 @@ const opts: { id: AnalysisMode; label: string; icon: typeof Star }[] = [
 ];
 
 const models: { id: AiModel; label: string; dot: string }[] = [
-  { id: "gpt", label: "GPT Vision", dot: "bg-emerald-400" },
   { id: "gem", label: "Gemini Vision", dot: "bg-sky-400" },
-  { id: "cla", label: "Claude Vision", dot: "bg-orange-400" },
+  { id: "gpt", label: "GPT Vision", dot: "bg-emerald-400" },
+  { id: "both", label: "Gemini + GPT", dot: "bg-gradient-to-r from-sky-400 to-emerald-400" },
 ];
 
 export function AnalysisOptions() {
