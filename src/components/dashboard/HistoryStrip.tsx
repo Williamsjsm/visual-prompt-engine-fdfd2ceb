@@ -5,14 +5,18 @@ import castleImg from "@/assets/castle.jpg";
 import mountainImg from "@/assets/mountain.jpg";
 import cyberpunkImg from "@/assets/cyberpunk.jpg";
 import { usePromptStore, type HistoryItem } from "@/lib/prompt-store";
+import { ModelBadge } from "@/components/dashboard/ModelBadge";
 
 const seed: HistoryItem[] = [
   {
     id: "s1",
     title: "Templo japonés de noche",
     date: "Hoy, 10:45 AM",
+    createdAt: Date.now() - 1000 * 60 * 30,
     type: "Imagen",
     img: templeImg,
+    model: "both",
+    score: 96,
     analysis: {} as never,
     prompts: { principal: "traditional Japanese temple at night" } as never,
   },
@@ -20,8 +24,11 @@ const seed: HistoryItem[] = [
     id: "s2",
     title: "Castillo medieval",
     date: "Hoy, 09:32 AM",
+    createdAt: Date.now() - 1000 * 60 * 90,
     type: "Imagen",
     img: castleImg,
+    model: "gem",
+    score: 92,
     analysis: {} as never,
     prompts: { principal: "medieval castle on a cliff at sunset" } as never,
   },
@@ -29,8 +36,11 @@ const seed: HistoryItem[] = [
     id: "s3",
     title: "Amanecer en la montaña",
     date: "Ayer, 08:15 PM",
+    createdAt: Date.now() - 1000 * 60 * 60 * 16,
     type: "Imagen",
     img: mountainImg,
+    model: "gpt",
+    score: 89,
     analysis: {} as never,
     prompts: { principal: "snowy mountains at sunrise" } as never,
   },
@@ -38,8 +48,11 @@ const seed: HistoryItem[] = [
     id: "s4",
     title: "Ciudad futurista cyberpunk",
     date: "Ayer, 06:42 PM",
+    createdAt: Date.now() - 1000 * 60 * 60 * 18,
     type: "Imagen",
     img: cyberpunkImg,
+    model: "gpt",
+    score: 87,
     analysis: {} as never,
     prompts: { principal: "futuristic cyberpunk city, neon lights" } as never,
   },
@@ -85,8 +98,13 @@ export function HistoryStrip() {
               className="h-14 w-14 rounded-lg object-cover ring-1 ring-white/10"
             />
             <div className="flex-1 min-w-0">
-              <div className="truncate text-[12.5px] font-medium text-white">{it.title}</div>
-              <div className="text-[11px] text-slate-400">{it.date}</div>
+              <div className="flex items-center gap-1.5">
+                <div className="truncate text-[12.5px] font-medium text-white">{it.title}</div>
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <ModelBadge model={it.model} />
+                <div className="text-[11px] text-slate-400 truncate">{it.date}</div>
+              </div>
               <div className="mt-1.5 flex items-center gap-2.5 text-slate-500">
                 {copiedId === it.id ? (
                   <Check className="h-3.5 w-3.5 text-emerald-400" />

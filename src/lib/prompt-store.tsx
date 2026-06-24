@@ -53,10 +53,19 @@ export type HistoryItem = {
   id: string;
   title: string;
   date: string;
+  createdAt: number;
   type: "Imagen" | "Video" | "Prompt";
   img: string;
+  model: AiModel;
+  score: number;
   analysis: AnalysisFields;
   prompts: Prompts;
+};
+
+export const MODEL_LABEL: Record<AiModel, string> = {
+  gpt: "GPT",
+  gem: "Gemini",
+  both: "Gemini + GPT",
 };
 
 export type UploadInfo = {
@@ -188,12 +197,23 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     setPrompts(result.prompts);
     setStatus("ready");
 
+    const principalLen = result.prompts.principal?.length ?? 0;
+    const baseScore =
+      model === "both" ? 96 : model === "gem" ? 91 : 88;
+    const score = Math.min(
+      99,
+      Math.max(70, baseScore + Math.round((principalLen % 60) / 12) - 2),
+    );
+
     const item: HistoryItem = {
       id: crypto.randomUUID(),
       title: shortTitle(upload.name),
       date: nowLabel(),
+      createdAt: Date.now(),
       type: upload.kind === "video" ? "Video" : "Imagen",
       img: upload.url,
+      model,
+      score,
       analysis: result.analysis,
       prompts: result.prompts,
     };
