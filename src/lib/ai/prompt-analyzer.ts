@@ -133,11 +133,11 @@ export async function analyzeWithOpenAI(
   return runAnalyzer(file, "gpt", options);
 }
 
-export async function analyzeWithClaude(
+export async function analyzeCombined(
   file: UploadInfo | File,
   options: AnalyzeOptions,
 ): Promise<AnalyzeResult> {
-  return runAnalyzer(file, "cla", options);
+  return runAnalyzer(file, "both", options);
 }
 
 /**
