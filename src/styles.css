@@ -112,6 +112,69 @@
       radial-gradient(700px 500px at 50% 110%, rgba(91, 94, 255, 0.1), transparent 60%);
     background-attachment: fixed;
   }
+
+  button {
+    position: relative;
+    transform-origin: center;
+    transition:
+      transform 0.16s ease,
+      filter 0.16s ease,
+      box-shadow 0.16s ease,
+      background-color 0.16s ease,
+      border-color 0.16s ease,
+      color 0.16s ease,
+      opacity 0.16s ease;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:not(:disabled):hover {
+    transform: translateY(-1px) scale(1.015);
+    filter: brightness(1.06);
+  }
+
+  button:not(:disabled):active {
+    transform: translateY(1px) scale(0.97);
+    filter: brightness(0.95);
+  }
+
+  button:focus-visible {
+    outline: 2px solid rgba(124, 77, 255, 0.9);
+    outline-offset: 3px;
+    animation: button-focus-pop 0.42s ease both;
+  }
+
+  button:disabled {
+    transform: none;
+    filter: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button,
+    button:focus-visible {
+      animation: none;
+      transition: none;
+    }
+
+    button:not(:disabled):hover,
+    button:not(:disabled):active {
+      transform: none;
+    }
+  }
+}
+
+@keyframes button-focus-pop {
+  0% {
+    box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(124, 77, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(124, 77, 255, 0);
+  }
 }
 
 @utility glass-panel {
@@ -141,7 +204,10 @@
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.08) inset,
     0 10px 30px -10px rgba(124, 77, 255, 0.7);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
   &:hover {
     filter: brightness(1.08);
     box-shadow:
@@ -153,4 +219,131 @@
 @utility scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+@layer components {
+  @media (max-width: 1440px), (max-height: 850px) {
+    .app-main {
+      padding-left: 0.875rem !important;
+      padding-right: 0.875rem !important;
+      padding-bottom: 1.5rem !important;
+    }
+
+    .app-sidebar {
+      width: 13.75rem !important;
+      gap: 0.875rem !important;
+      padding: 0.875rem !important;
+    }
+
+    .app-sidebar nav {
+      gap: 0.25rem !important;
+    }
+
+    .app-sidebar nav button {
+      padding: 0.55rem 0.75rem !important;
+      font-size: 0.78rem !important;
+    }
+
+    .app-sidebar .glass-panel {
+      padding: 0.65rem !important;
+    }
+
+    .app-main header {
+      padding-bottom: 0.65rem !important;
+    }
+
+    .app-main h1 {
+      font-size: 1.35rem !important;
+      line-height: 1.15 !important;
+    }
+
+    .app-shell .glass-panel.p-5,
+    .app-shell .glass-panel[class*=" p-5"],
+    .app-shell .glass-panel[class$="p-5"] {
+      padding: 1rem !important;
+    }
+
+    .app-shell .glass-inset.p-5,
+    .app-shell .glass-inset[class*=" p-5"],
+    .app-shell .glass-inset[class$="p-5"] {
+      padding: 1rem !important;
+    }
+
+    .upload-preview-media {
+      height: 11.25rem !important;
+    }
+  }
+
+  @media (max-height: 760px) and (min-width: 1024px) {
+    .app-main {
+      padding-top: 0.25rem !important;
+      padding-bottom: 1rem !important;
+    }
+
+    .app-sidebar {
+      width: 12.5rem !important;
+      gap: 0.65rem !important;
+      padding: 0.75rem !important;
+    }
+
+    .app-sidebar > div:first-child {
+      transform: scale(0.9);
+      transform-origin: left top;
+      margin-bottom: -0.35rem;
+    }
+
+    .app-sidebar nav button {
+      padding: 0.45rem 0.65rem !important;
+      font-size: 0.74rem !important;
+    }
+
+    .app-sidebar nav svg {
+      height: 1rem !important;
+      width: 1rem !important;
+    }
+
+    .app-sidebar .glass-panel {
+      padding: 0.55rem !important;
+    }
+
+    .app-sidebar .mt-auto {
+      gap: 0.5rem !important;
+    }
+
+    .app-main header p,
+    .app-sidebar .text-\[11px\] {
+      font-size: 0.68rem !important;
+    }
+
+    .app-shell .glass-panel.p-5,
+    .app-shell .glass-panel[class*=" p-5"],
+    .app-shell .glass-panel[class$="p-5"] {
+      padding: 0.75rem !important;
+    }
+
+    .app-shell section h2 {
+      margin-bottom: 0.65rem !important;
+    }
+
+    .upload-preview-media {
+      height: 9.5rem !important;
+    }
+  }
+
+  @media (max-width: 1180px) and (min-width: 1024px) {
+    .app-sidebar {
+      width: 11.75rem !important;
+    }
+
+    .app-sidebar nav button {
+      gap: 0.45rem !important;
+      padding-left: 0.55rem !important;
+      padding-right: 0.55rem !important;
+    }
+
+    .app-main {
+      padding-left: 0.65rem !important;
+      padding-right: 0.65rem !important;
+    }
+  }
 }

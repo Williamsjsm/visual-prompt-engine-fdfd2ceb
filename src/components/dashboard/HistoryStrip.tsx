@@ -1,4 +1,4 @@
-import { History, Copy, Pencil, Files, Trash2, Check } from "lucide-react";
+import { History, Copy, Pencil, Files, Trash2, Check, Star } from "lucide-react";
 import { useState } from "react";
 import templeImg from "@/assets/temple.jpg";
 import castleImg from "@/assets/castle.jpg";
@@ -59,7 +59,8 @@ const seed: HistoryItem[] = [
 ];
 
 export function HistoryStrip() {
-  const { history } = usePromptStore();
+  const { history, toggleFavorite, isFavorite, removeHistoryItem, loadHistoryItem } =
+    usePromptStore();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const items = [...history, ...seed].slice(0, 4);
 
@@ -114,9 +115,23 @@ export function HistoryStrip() {
                     onClick={() => copy(it)}
                   />
                 )}
-                <Pencil className="h-3.5 w-3.5 hover:text-white cursor-pointer" />
+                <Pencil
+                  className="h-3.5 w-3.5 hover:text-white cursor-pointer"
+                  onClick={() => loadHistoryItem(it)}
+                />
                 <Files className="h-3.5 w-3.5 hover:text-white cursor-pointer" />
-                <Trash2 className="h-3.5 w-3.5 text-rose-400/80 hover:text-rose-300 cursor-pointer" />
+                <Star
+                  className={
+                    isFavorite(it.id)
+                      ? "h-3.5 w-3.5 text-amber-300 fill-amber-300 cursor-pointer"
+                      : "h-3.5 w-3.5 hover:text-amber-300 cursor-pointer"
+                  }
+                  onClick={() => toggleFavorite(it)}
+                />
+                <Trash2
+                  className="h-3.5 w-3.5 text-rose-400/80 hover:text-rose-300 cursor-pointer"
+                  onClick={() => removeHistoryItem(it.id)}
+                />
               </div>
             </div>
           </div>

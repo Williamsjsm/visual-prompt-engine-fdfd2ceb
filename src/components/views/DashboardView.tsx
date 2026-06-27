@@ -1,22 +1,61 @@
 import { motion } from "framer-motion";
-import { Sparkles, Image as ImageIcon, Video, History, Star, TrendingUp } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Video, Star, TrendingUp, UsersRound } from "lucide-react";
 import { HistoryStrip } from "@/components/dashboard/HistoryStrip";
 import type { SectionKey } from "@/components/layout/Sidebar";
+import { usePromptStore } from "@/lib/prompt-store";
 
 const fade = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
-
-const stats = [
-  { label: "Prompts generados", value: "248", icon: Sparkles, tint: "from-[#7c4dff] to-[#5b5eff]" },
-  { label: "Imágenes creadas", value: "112", icon: ImageIcon, tint: "from-[#3b82f6] to-[#00c2ff]" },
-  { label: "Videos generados", value: "37", icon: Video, tint: "from-[#ec4899] to-[#7c4dff]" },
-  { label: "Favoritos", value: "26", icon: Star, tint: "from-[#f59e0b] to-[#ec4899]" },
-];
 
 interface Props {
   onNavigate: (key: SectionKey) => void;
 }
 
 export function DashboardView({ onNavigate }: Props) {
+  const { history, favorites, avatars } = usePromptStore();
+  const imageCount = history.filter((item) => item.type === "Imagen").length;
+  const videoCount = history.filter((item) => item.type === "Video").length;
+  const stats = [
+    {
+      label: "Prompts generados",
+      value: String(history.length),
+      icon: Sparkles,
+      tint: "from-[#7c4dff] to-[#5b5eff]",
+    },
+    {
+      label: "Imágenes analizadas",
+      value: String(imageCount),
+      icon: ImageIcon,
+      tint: "from-[#3b82f6] to-[#00c2ff]",
+    },
+    {
+      label: "Videos analizados",
+      value: String(videoCount),
+      icon: Video,
+      tint: "from-[#ec4899] to-[#7c4dff]",
+    },
+    {
+      label: "Favoritos",
+      value: String(favorites.length),
+      icon: Star,
+      tint: "from-[#f59e0b] to-[#ec4899]",
+    },
+    {
+      label: "Avatares",
+      value: String(avatars.length),
+      icon: UsersRound,
+      tint: "from-[#22c55e] to-[#00c2ff]",
+    },
+  ];
+  const latestPrompts =
+    history.length > 0
+      ? history.slice(0, 4).map((item) => ({ title: item.title, date: item.date }))
+      : [
+          { title: "Retrato cinematográfico con luz neón violeta", date: "Ejemplo" },
+          { title: "Paisaje épico al amanecer estilo Studio Ghibli", date: "Ejemplo" },
+          { title: "Producto premium sobre fondo de mármol negro", date: "Ejemplo" },
+          { title: "Ciudad cyberpunk lluviosa con reflejos de neón", date: "Ejemplo" },
+        ];
+
   return (
     <div className="flex flex-col gap-5">
       <motion.section
@@ -52,7 +91,7 @@ export function DashboardView({ onNavigate }: Props) {
       <motion.div
         {...fade}
         transition={{ duration: 0.4, delay: 0.06 }}
-        className="grid grid-cols-2 xl:grid-cols-4 gap-4"
+        className="grid grid-cols-2 xl:grid-cols-5 gap-4"
       >
         {stats.map((s) => (
           <div key={s.label} className="glass-panel p-4">
@@ -81,15 +120,10 @@ export function DashboardView({ onNavigate }: Props) {
           Últimos prompts
         </h3>
         <ul className="divide-y divide-white/5">
-          {[
-            "Retrato cinematográfico con luz neón violeta",
-            "Paisaje épico al amanecer estilo Studio Ghibli",
-            "Producto premium sobre fondo de mármol negro",
-            "Ciudad cyberpunk lluviosa con reflejos de neón",
-          ].map((p) => (
-            <li key={p} className="flex items-center justify-between py-2.5">
-              <span className="text-[13px] text-slate-200">{p}</span>
-              <span className="text-[11px] text-slate-500">hace 2h</span>
+          {latestPrompts.map((p) => (
+            <li key={p.title} className="flex items-center justify-between py-2.5 gap-3">
+              <span className="min-w-0 truncate text-[13px] text-slate-200">{p.title}</span>
+              <span className="shrink-0 text-[11px] text-slate-500">{p.date}</span>
             </li>
           ))}
         </ul>

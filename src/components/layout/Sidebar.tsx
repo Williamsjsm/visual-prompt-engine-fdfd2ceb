@@ -5,6 +5,7 @@ import {
   Video,
   History,
   Star,
+  UsersRound,
   Settings,
   HelpCircle,
   ChevronDown,
@@ -21,6 +22,7 @@ export type SectionKey =
   | "generar-video"
   | "historial"
   | "favoritos"
+  | "avatares"
   | "configuracion"
   | "ayuda";
 
@@ -31,6 +33,7 @@ const items: { key: SectionKey; label: string; icon: LucideIcon }[] = [
   { key: "generar-video", label: "Generar Video", icon: Video },
   { key: "historial", label: "Historial", icon: History },
   { key: "favoritos", label: "Favoritos", icon: Star },
+  { key: "avatares", label: "Avatares", icon: UsersRound },
   { key: "configuracion", label: "Configuración", icon: Settings },
   { key: "ayuda", label: "Ayuda", icon: HelpCircle },
 ];
@@ -43,7 +46,7 @@ interface SidebarProps {
 export function Sidebar({ active, onChange }: SidebarProps) {
   const [dark, setDark] = useState(true);
   return (
-    <aside className="hidden lg:flex w-[260px] shrink-0 flex-col gap-6 p-5">
+    <aside className="app-sidebar hidden lg:flex w-[260px] shrink-0 flex-col gap-6 p-5">
       {/* Logo */}
       <div className="flex items-center gap-3 px-1 pt-1">
         <div className="relative h-12 w-12 rounded-xl p-[1px] bg-gradient-to-br from-[#7c4dff] to-[#3b82f6] shadow-[0_0_20px_-2px_rgba(124,77,255,0.6)]">

@@ -24,6 +24,18 @@ export const DEFAULT_ANALYSIS: AnalysisFields = {
 export const DEFAULT_BASE =
   "traditional Japanese temple at night, illuminated by warm lanterns, cherry blossom trees in full bloom, full moon, calm lake reflection";
 
+export const EXACT_IDENTITY_PROMPT_BLOCK = `Use the reference image as the exact character reference.
+
+Keep the exact same person, identical facial identity, face shape, eyes, eyebrows, nose, lips, smile, skin tone, hairstyle, hair color, body proportions and overall appearance.
+
+Do not modify facial features.
+Do not change age.
+Do not change body shape.
+Do not change facial expression style.
+Maintain exact identity consistency.
+
+Start directly in the target scene from the first frame. No separate intro shot, no photo animation, no morph, no before-after transformation, no transition.`;
+
 const PRESETS: Record<string, Preset> = {
   castle: {
     analysis: {
@@ -115,8 +127,7 @@ export function pickPreset(name: string): Preset {
   const n = name.toLowerCase();
   if (n.includes("castle") || n.includes("castillo")) return PRESETS.castle;
   if (n.includes("mount") || n.includes("monta")) return PRESETS.mountain;
-  if (n.includes("cyber") || n.includes("neon") || n.includes("city"))
-    return PRESETS.cyberpunk;
+  if (n.includes("cyber") || n.includes("neon") || n.includes("city")) return PRESETS.cyberpunk;
   if (n.includes("portrait") || n.includes("retrato") || n.includes("face"))
     return PRESETS.portrait;
   return { analysis: DEFAULT_ANALYSIS, base: DEFAULT_BASE };
@@ -127,6 +138,7 @@ export function buildPromptsFromBase(
   mode: AnalysisMode,
   kind: "image" | "video",
 ): Prompts {
+  const cleanBase = applyExactIdentityBlock(sanitizePromptForGeneration(base));
   const len =
     mode === "max"
       ? ", hyper detailed, 8k, masterpiece"
@@ -135,18 +147,89 @@ export function buildPromptsFromBase(
         : mode === "short"
           ? ""
           : ", high quality";
+  const directScene =
+    /same character identity|identity locked|consistent face|distinctive features/i.test(cleanBase)
+      ? ", start directly in the target scene, no standalone intro shot, no intro photo animation, no morph, no transition"
+      : "";
 
   return {
-    principal: `${base}${len}, cinematic lighting, ultra realistic --ar 16:9`,
+    principal: `${cleanBase}${len}, cinematic lighting, ultra realistic --ar 16:9`,
     negativo:
       "blurry, low quality, distorted, deformed, watermark, text, logo, oversaturated, bad anatomy, extra limbs, jpeg artifacts, low resolution",
-    cinematografico: `cinematic shot, ${base}, anamorphic lens, shallow depth of field, volumetric light, color graded teal & orange, 35mm film grain, ultra detailed, 8k`,
-    video: `slow cinematic dolly-in, ${base}, subtle motion, 24fps, ${kind === "video" ? "5 second clip" : "cinematic motion"}`,
-    imagen: `ultra detailed photo, ${base}, photorealistic, sharp focus, 8k`,
-    midjourney: `${base}${len} --ar 16:9 --style raw --v 6`,
-    flux: `${base.charAt(0).toUpperCase() + base.slice(1)}${len}, hyper-detailed, 8K`,
-    veo: `Cinematic 5s shot, ${base}, photorealistic, 24fps`,
-    kling: `Realistic cinematic video, ${base}, smooth camera motion, 5 seconds`,
-    whisk: `Subject and scene: ${base}. Style: cinematic, ultra realistic.`,
+    cinematografico: `cinematic shot, ${cleanBase}, anamorphic lens, shallow depth of field, volumetric light, color graded teal & orange, 35mm film grain, ultra detailed, 8k`,
+    video: `slow cinematic dolly-in, ${cleanBase}${directScene}, subtle motion, 24fps, ${kind === "video" ? "5 second clip" : "cinematic motion"}`,
+    imagenBase: `FLOW BASE IMAGE / FIRST FRAME: create one static photorealistic image, ${cleanBase}, already inside the final target scene, matching the original camera angle and composition, selfie-style framing when present, natural skin texture, visible pores, realistic hair strands, detailed eyes, cinematic depth of field, vertical 9:16, no motion, no transition, no split-screen, no collage`,
+    imagen: `ultra detailed photo, ${cleanBase}, photorealistic, sharp focus, 8k`,
+    midjourney: `${cleanBase}${len} --ar 16:9 --style raw --v 6`,
+    flux: `${cleanBase.charAt(0).toUpperCase() + cleanBase.slice(1)}${len}, hyper-detailed, 8K`,
+    veo: `Cinematic 5s shot, ${cleanBase}${directScene}, photorealistic, 24fps`,
+    kling: `Realistic cinematic video, ${cleanBase}${directScene}, smooth camera motion, 5 seconds`,
+    whisk: `Subject and scene: ${cleanBase}. Style: cinematic, ultra realistic.`,
+    youtubeCreate: buildYouTubeCreatePrompt(cleanBase),
   };
+}
+
+function buildYouTubeCreatePrompt(value: string): string {
+  const hasIdentity = needsExactIdentityBlock(value);
+  const scene = stripExactIdentityBlock(value)
+    .replace(/--ar\s+\S+/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  const identity = hasIdentity
+    ? "Use reference image as exact character identity; keep same face, age, body, skin tone, hair, proportions and distinctive details; do not redesign. "
+    : "";
+  return truncateAtWord(
+    `${identity}YouTube Create vertical 9:16 video: ${scene}. Photorealistic cinematic light, natural camera motion, realistic texture. Start directly in the final scene, no intro, no photo animation, no morph, no transition.`,
+    900,
+  );
+}
+
+function stripExactIdentityBlock(value: string): string {
+  return value
+    .replace(EXACT_IDENTITY_PROMPT_BLOCK, "")
+    .replace(/Use the reference image as the exact character reference\.[\s\S]*?transition\./i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function truncateAtWord(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  const limit = Math.max(0, maxLength - 3);
+  const cut = value.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > 80 ? lastSpace : limit).trim()}...`;
+}
+
+function applyExactIdentityBlock(value: string): string {
+  if (!needsExactIdentityBlock(value)) return value;
+  if (/Use the reference image as the exact character reference/i.test(value)) return value;
+  return `${EXACT_IDENTITY_PROMPT_BLOCK}\n\n${value}`;
+}
+
+function needsExactIdentityBlock(value: string): boolean {
+  return /same character identity|identity locked|consistent face|distinctive features|exact identity consistency|exact character reference/i.test(
+    value,
+  );
+}
+
+function sanitizePromptForGeneration(value: string): string {
+  return value
+    .replace(/the same referenced avatar\/person/gi, "the exact same person")
+    .replace(/same referenced avatar\/person/gi, "the exact same person")
+    .replace(/referenced avatar\/person/gi, "exact character reference")
+    .replace(/referenced avatar/gi, "person")
+    .replace(/reference-image/gi, "reference image")
+    .replace(/attached image/gi, "reference image")
+    .replace(/uploaded image/gi, "reference image")
+    .replace(/provided image/gi, "reference image")
+    .replace(/input image/gi, "reference image")
+    .replace(/source image/gi, "reference image")
+    .replace(/identity source/gi, "reference image")
+    .replace(/identity-source/gi, "reference image")
+    .replace(/referenced person/gi, "exact same person")
+    .replace(/\bavatar\/person\b/gi, "person")
+    .replace(/\bavatar\b/gi, "person")
+    .replace(/\breferenced\b/gi, "exact")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
