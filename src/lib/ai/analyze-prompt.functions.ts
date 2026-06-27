@@ -1,9 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import type {
-  AnalysisFields,
-  AnalysisMode,
-  Prompts,
-} from "@/lib/prompt-store";
+import type { AnalysisFields, AnalysisMode, Prompts } from "@/lib/prompt-store";
 import { buildPromptsFromBase, DEFAULT_ANALYSIS, DEFAULT_BASE } from "./mock-presets";
 
 export type AnalyzeRequest = {
@@ -25,8 +21,19 @@ export type AnalyzeResponse = {
 };
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const GEMINI_MODEL = "google/gemini-3-flash-preview";
-const OPENAI_MODEL = "openai/gpt-5-mini";
+const GEMINI_MODEL = process.env.LOVABLE_GEMINI_MODEL?.trim() || "google/gemini-3-flash-preview";
+const OPENAI_MODEL = process.env.LOVABLE_OPENAI_MODEL?.trim() || "openai/gpt-5-mini";
+const CACHE_TTL_MS =
+  Math.max(0, Number.parseInt(process.env.PROMPT_GENERATOR_CACHE_MINUTES ?? "720", 10) || 720) *
+  60_000;
+const PROVIDER_COOLDOWN_MS =
+  Math.max(
+    1,
+    Number.parseInt(process.env.PROMPT_GENERATOR_PROVIDER_COOLDOWN_MINUTES ?? "360", 10) || 360,
+  ) * 60_000;
+
+const analysisCache = new Map<string, { expiresAt: number; value: AnalyzeResponse }>();
+const providerCooldown = new Map<string, number>();
 
 const SYSTEM_PROMPT = `Eres un analista visual experto. Analiza el contenido recibido y responde EXCLUSIVAMENTE con un objeto JSON válido (sin markdown, sin texto extra) con estas claves exactas:
 {
@@ -52,11 +59,65 @@ Responde en el idioma solicitado para los campos descriptivos, pero "base" siemp
 
 type RawAnalysis = AnalysisFields & { base: string };
 
-async function callGateway(
-  model: string,
-  messages: unknown[],
-  key: string,
-): Promise<string> {
+class GatewayError extends Error {
+  status: number;
+  body: string;
+
+  constructor(model: string, status: number, body: string) {
+    super(`Gateway ${model} ${status}: ${body.slice(0, 300)}`);
+    this.status = status;
+    this.body = body;
+  }
+}
+
+function cacheKey(data: AnalyzeRequest) {
+  return JSON.stringify(data);
+}
+
+function getCachedAnalysis(key: string): AnalyzeResponse | null {
+  if (CACHE_TTL_MS <= 0) return null;
+  const hit = analysisCache.get(key);
+  if (!hit) return null;
+  if (hit.expiresAt <= Date.now()) {
+    analysisCache.delete(key);
+    return null;
+  }
+  return hit.value;
+}
+
+function setCachedAnalysis(key: string, value: AnalyzeResponse) {
+  if (CACHE_TTL_MS <= 0) return;
+  analysisCache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, value });
+}
+
+function isQuotaOrRateLimit(err: unknown) {
+  if (!(err instanceof GatewayError)) return false;
+  const body = err.body.toLowerCase();
+  return (
+    err.status === 402 ||
+    err.status === 429 ||
+    body.includes("quota") ||
+    body.includes("credit") ||
+    body.includes("rate limit") ||
+    body.includes("insufficient")
+  );
+}
+
+function isCoolingDown(model: string) {
+  const until = providerCooldown.get(model);
+  if (!until) return false;
+  if (until <= Date.now()) {
+    providerCooldown.delete(model);
+    return false;
+  }
+  return true;
+}
+
+function coolDown(model: string) {
+  providerCooldown.set(model, Date.now() + PROVIDER_COOLDOWN_MS);
+}
+
+async function callGateway(model: string, messages: unknown[], key: string): Promise<string> {
   const res = await fetch(GATEWAY_URL, {
     method: "POST",
     headers: {
@@ -71,7 +132,7 @@ async function callGateway(
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gateway ${model} ${res.status}: ${text.slice(0, 300)}`);
+    throw new GatewayError(model, res.status, text);
   }
   const json = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
@@ -146,27 +207,53 @@ export const analyzePrompt = createServerFn({ method: "POST" })
     // Fall back to mock so the UI keeps working.
     if (data.kind === "video") return { source: "mock" };
 
+    const key = cacheKey(data);
+    const cached = getCachedAnalysis(key);
+    if (cached) return cached;
+
     const messages = buildVisionMessages(data);
 
     try {
       if (data.model === "gpt") {
-        const content = await callGateway(OPENAI_MODEL, messages, lovableKey);
+        if (!isCoolingDown(OPENAI_MODEL)) {
+          try {
+            const content = await callGateway(OPENAI_MODEL, messages, lovableKey);
+            const raw = safeParse(content);
+            const result = {
+              source: "openai" as const,
+              analysis: stripBase(raw),
+              prompts: buildPromptsFromBase(raw.base, data.mode, data.kind),
+            };
+            setCachedAnalysis(key, result);
+            return result;
+          } catch (err) {
+            if (!isQuotaOrRateLimit(err)) throw err;
+            coolDown(OPENAI_MODEL);
+            console.warn("[analyzePrompt] openai quota/rate limit, falling back to gemini");
+          }
+        }
+
+        const content = await callGateway(GEMINI_MODEL, messages, lovableKey);
         const raw = safeParse(content);
-        return {
-          source: "openai",
+        const result = {
+          source: "gemini" as const,
           analysis: stripBase(raw),
           prompts: buildPromptsFromBase(raw.base, data.mode, data.kind),
         };
+        setCachedAnalysis(key, result);
+        return result;
       }
 
       if (data.model === "gem") {
         const content = await callGateway(GEMINI_MODEL, messages, lovableKey);
         const raw = safeParse(content);
-        return {
-          source: "gemini",
+        const result = {
+          source: "gemini" as const,
           analysis: stripBase(raw),
           prompts: buildPromptsFromBase(raw.base, data.mode, data.kind),
         };
+        setCachedAnalysis(key, result);
+        return result;
       }
 
       // model === "both": Gemini para análisis visual + OpenAI para refinar prompts.
@@ -175,20 +262,32 @@ export const analyzePrompt = createServerFn({ method: "POST" })
         const content = await callGateway(GEMINI_MODEL, messages, lovableKey);
         raw = safeParse(content);
       } catch (err) {
+        if (isQuotaOrRateLimit(err)) coolDown(GEMINI_MODEL);
         console.warn("[analyzePrompt] gemini failed, mock:", err);
         return { source: "mock" };
       }
-      try {
-        raw = await refineWithOpenAI(raw, data, lovableKey);
-      } catch (err) {
-        console.warn("[analyzePrompt] openai refine failed, using gemini only:", err);
+      let refined = false;
+      if (!isCoolingDown(OPENAI_MODEL)) {
+        try {
+          raw = await refineWithOpenAI(raw, data, lovableKey);
+          refined = true;
+        } catch (err) {
+          if (isQuotaOrRateLimit(err)) coolDown(OPENAI_MODEL);
+          console.warn("[analyzePrompt] openai refine failed, using gemini only:", err);
+        }
       }
-      return {
-        source: "combined",
+      const result = {
+        source: refined ? ("combined" as const) : ("gemini" as const),
         analysis: stripBase(raw),
         prompts: buildPromptsFromBase(raw.base, data.mode, data.kind),
       };
+      setCachedAnalysis(key, result);
+      return result;
     } catch (err) {
+      if (isQuotaOrRateLimit(err)) {
+        const model = data.model === "gem" ? GEMINI_MODEL : OPENAI_MODEL;
+        coolDown(model);
+      }
       console.warn("[analyzePrompt] provider error, mock:", err);
       return { source: "mock" };
     }

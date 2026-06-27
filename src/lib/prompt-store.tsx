@@ -63,9 +63,9 @@ export type HistoryItem = {
 };
 
 export const MODEL_LABEL: Record<AiModel, string> = {
-  gpt: "GPT",
-  gem: "Gemini",
-  both: "Gemini + GPT",
+  gpt: "GPT vía Lovable",
+  gem: "Gemini vía Lovable",
+  both: "Gemini + GPT vía Lovable",
 };
 
 export type UploadInfo = {

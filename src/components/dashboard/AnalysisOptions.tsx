@@ -9,9 +9,13 @@ const opts: { id: AnalysisMode; label: string; icon: typeof Star }[] = [
 ];
 
 const models: { id: AiModel; label: string; dot: string }[] = [
-  { id: "gem", label: "Gemini Vision", dot: "bg-sky-400" },
-  { id: "gpt", label: "GPT Vision", dot: "bg-emerald-400" },
-  { id: "both", label: "Gemini + GPT", dot: "bg-gradient-to-r from-sky-400 to-emerald-400" },
+  { id: "gem", label: "Gemini vía Lovable", dot: "bg-sky-400" },
+  { id: "gpt", label: "GPT vía Lovable", dot: "bg-emerald-400" },
+  {
+    id: "both",
+    label: "Gemini + GPT vía Lovable",
+    dot: "bg-gradient-to-r from-sky-400 to-emerald-400",
+  },
 ];
 
 export function AnalysisOptions() {
@@ -24,7 +28,9 @@ export function AnalysisOptions() {
       <h2 className="text-[15px] font-semibold text-white">
         <span className="text-slate-400 mr-1">2.</span> Opciones de análisis
       </h2>
-      <p className="mt-0.5 text-[12.5px] text-slate-400">Personaliza cómo quieres generar tu prompt</p>
+      <p className="mt-0.5 text-[12.5px] text-slate-400">
+        Personaliza cómo quieres generar tu prompt con Lovable Gateway
+      </p>
 
       <div className="mt-4 grid grid-cols-4 gap-2.5">
         {opts.map((o) => {
