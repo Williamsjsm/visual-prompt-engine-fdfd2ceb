@@ -2,25 +2,24 @@ import {
   Home,
   Sparkles,
   Image as ImageIcon,
-  Video,
   History,
   Star,
+  UsersRound,
   Settings,
   HelpCircle,
   ChevronDown,
-  Moon,
   type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
 import avatarImg from "@/assets/avatar.jpg";
+import { usePromptStore } from "@/lib/prompt-store";
 
 export type SectionKey =
   | "dashboard"
   | "generar-prompt"
   | "generar-imagen"
-  | "generar-video"
   | "historial"
   | "favoritos"
+  | "avatares"
   | "configuracion"
   | "ayuda";
 
@@ -28,9 +27,9 @@ const items: { key: SectionKey; label: string; icon: LucideIcon }[] = [
   { key: "dashboard", label: "Dashboard", icon: Home },
   { key: "generar-prompt", label: "Generar Prompt", icon: Sparkles },
   { key: "generar-imagen", label: "Generar Imagen", icon: ImageIcon },
-  { key: "generar-video", label: "Generar Video", icon: Video },
   { key: "historial", label: "Historial", icon: History },
   { key: "favoritos", label: "Favoritos", icon: Star },
+  { key: "avatares", label: "Avatares", icon: UsersRound },
   { key: "configuracion", label: "Configuración", icon: Settings },
   { key: "ayuda", label: "Ayuda", icon: HelpCircle },
 ];
@@ -41,9 +40,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ active, onChange }: SidebarProps) {
-  const [dark, setDark] = useState(true);
+  const { userProfile } = usePromptStore();
   return (
-    <aside className="hidden lg:flex w-[260px] shrink-0 flex-col gap-6 p-5">
+    <aside className="app-sidebar hidden lg:flex w-[260px] shrink-0 flex-col gap-6 p-5">
       {/* Logo */}
       <div className="flex items-center gap-3 px-1 pt-1">
         <div className="relative h-12 w-12 rounded-xl p-[1px] bg-gradient-to-br from-[#7c4dff] to-[#3b82f6] shadow-[0_0_20px_-2px_rgba(124,77,255,0.6)]">
@@ -83,37 +82,17 @@ export function Sidebar({ active, onChange }: SidebarProps) {
         {/* User card */}
         <div className="glass-panel flex items-center gap-3 px-3 py-2.5">
           <img
-            src={avatarImg}
-            alt="Creator"
+            src={userProfile.photoUrl || avatarImg}
+            alt={userProfile.name}
             className="h-10 w-10 rounded-full object-cover ring-2 ring-[#7c4dff]/40"
           />
           <div className="flex-1 min-w-0 leading-tight">
-            <div className="truncate text-[13.5px] font-semibold text-white">Creator</div>
-            <div className="truncate text-[11.5px] text-slate-400">creador.ai</div>
+            <div className="truncate text-[13.5px] font-semibold text-white">
+              {userProfile.name}
+            </div>
+            <div className="truncate text-[11.5px] text-slate-400">{userProfile.role}</div>
           </div>
           <ChevronDown className="h-4 w-4 text-slate-400" />
-        </div>
-
-        {/* Dark mode switch */}
-        <div className="glass-panel flex items-center justify-between px-3.5 py-2.5">
-          <div className="flex items-center gap-2 text-[13px] text-slate-200">
-            <Moon className="h-4 w-4 text-slate-300" />
-            Modo Oscuro
-          </div>
-          <button
-            onClick={() => setDark((v) => !v)}
-            className={
-              "relative h-5 w-9 rounded-full transition-colors " +
-              (dark ? "bg-gradient-to-r from-[#5b5eff] to-[#3b82f6]" : "bg-white/10")
-            }
-          >
-            <span
-              className={
-                "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all " +
-                (dark ? "left-[18px]" : "left-0.5")
-              }
-            />
-          </button>
         </div>
 
         <div className="flex items-center gap-2 px-1 text-[11px] text-slate-500">

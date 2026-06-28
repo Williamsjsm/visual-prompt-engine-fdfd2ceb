@@ -9,7 +9,7 @@ const fade = { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } };
 
 export function GenerarPromptView() {
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[1fr_1.18fr] gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(340px,0.8fr)_minmax(0,1.45fr)] gap-5">
       <div className="flex flex-col gap-5">
         <motion.div {...fade} transition={{ duration: 0.4 }}>
           <UploadCard />

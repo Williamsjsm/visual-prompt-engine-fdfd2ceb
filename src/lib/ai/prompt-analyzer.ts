@@ -10,15 +10,13 @@
 import type {
   AnalysisFields,
   AnalysisMode,
+  IdentityLock,
   Prompts,
+  ReferenceInfo,
+  SceneAdaptation,
   UploadInfo,
 } from "@/lib/prompt-store";
-import {
-  buildPromptsFromBase,
-  pickPreset,
-  DEFAULT_ANALYSIS,
-  DEFAULT_BASE,
-} from "./mock-presets";
+import { buildPromptsFromBase, pickPreset, DEFAULT_ANALYSIS, DEFAULT_BASE } from "./mock-presets";
 import {
   analyzePrompt,
   type AnalyzeRequest,
@@ -29,6 +27,9 @@ export type AnalyzeOptions = {
   mode: AnalysisMode;
   language?: string;
   targetFormat?: string;
+  identityReference?: ReferenceInfo;
+  sceneAdaptation?: SceneAdaptation;
+  identityLock?: IdentityLock;
 };
 
 type AnalyzeResult = AnalyzeResponse;
@@ -61,11 +62,20 @@ async function buildRequest(
       model,
       language: options.language ?? "es",
       targetFormat: options.targetFormat ?? "16:9",
+      referenceDataUrl: options.identityReference?.dataUrl,
+      referenceFileName: options.identityReference?.name,
+      referenceMime: options.identityReference?.mime,
+      referenceProfileName: options.identityReference?.profileName,
+      referenceNotes: options.identityReference?.notes,
+      sceneAdaptation: options.sceneAdaptation ?? "similar",
+      identityLock: options.identityLock ?? "strict",
     };
   }
   if (!source) throw new Error("No file provided");
   return {
     fileUrl: source.url.startsWith("blob:") ? undefined : source.url,
+    fileDataUrl: source.dataUrl,
+    frameDataUrls: source.frameDataUrls,
     fileName: source.name,
     mime: source.mime,
     kind: source.kind,
@@ -73,6 +83,13 @@ async function buildRequest(
     model,
     language: options.language ?? "es",
     targetFormat: options.targetFormat ?? "16:9",
+    referenceDataUrl: options.identityReference?.dataUrl,
+    referenceFileName: options.identityReference?.name,
+    referenceMime: options.identityReference?.mime,
+    referenceProfileName: options.identityReference?.profileName,
+    referenceNotes: options.identityReference?.notes,
+    sceneAdaptation: options.sceneAdaptation ?? "similar",
+    identityLock: options.identityLock ?? "strict",
   };
 }
 
@@ -95,21 +112,24 @@ async function runAnalyzer(
   options: AnalyzeOptions,
 ): Promise<AnalyzeResult> {
   const kind: "image" | "video" =
-    source instanceof File
-      ? source.type.startsWith("video/")
-        ? "video"
-        : "image"
-      : source!.kind;
+    source instanceof File ? (source.type.startsWith("video/") ? "video" : "image") : source!.kind;
   const name = source instanceof File ? source.name : source?.name;
 
   try {
     const req = await buildRequest(source, model, options);
     const res = await analyzePrompt({ data: req });
     if (!res || res.source === "mock") {
+      if (model === "gpt" || model === "gem") {
+        const error = res && "error" in res ? res.error : undefined;
+        throw new Error(error || `${model === "gpt" ? "ChatGPT" : "Gemini"} no disponible`);
+      }
       return mockResult(name, kind, options.mode);
     }
     return res;
   } catch (err) {
+    if (model === "gpt" || model === "gem") {
+      throw err;
+    }
     console.warn("[prompt-analyzer] falling back to mock:", err);
     return mockResult(name, kind, options.mode);
   }
@@ -154,9 +174,7 @@ export function generatePromptVariants(
 }
 
 function analysisToBase(a: AnalysisFields): string {
-  const parts = [a.subject, a.setting, a.lighting, a.mood, a.style].filter(
-    Boolean,
-  );
+  const parts = [a.subject, a.setting, a.lighting, a.mood, a.style].filter(Boolean);
   return parts.join(", ") || DEFAULT_BASE;
 }
 

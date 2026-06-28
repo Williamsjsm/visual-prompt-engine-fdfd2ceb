@@ -6,9 +6,9 @@ import { SectionHeader } from "@/components/views/SectionHeader";
 import { DashboardView } from "@/components/views/DashboardView";
 import { GenerarPromptView } from "@/components/views/GenerarPromptView";
 import { GenerarImagenView } from "@/components/views/GenerarImagenView";
-import { GenerarVideoView } from "@/components/views/GenerarVideoView";
 import { HistorialView } from "@/components/views/HistorialView";
 import { FavoritosView } from "@/components/views/FavoritosView";
+import { AvataresView } from "@/components/views/AvataresView";
 import { ConfiguracionView } from "@/components/views/ConfiguracionView";
 import { AyudaView } from "@/components/views/AyudaView";
 import { PromptProvider } from "@/lib/prompt-store";
@@ -40,10 +40,6 @@ const headers: Record<SectionKey, { title: string; subtitle: string }> = {
     title: "Generar Imagen",
     subtitle: "Crea imágenes desde texto con los mejores modelos.",
   },
-  "generar-video": {
-    title: "Generar Video",
-    subtitle: "Anima imágenes o crea videos cinematográficos.",
-  },
   historial: {
     title: "Historial",
     subtitle: "Todos tus prompts, imágenes y videos generados.",
@@ -51,6 +47,10 @@ const headers: Record<SectionKey, { title: string; subtitle: string }> = {
   favoritos: {
     title: "Favoritos",
     subtitle: "Tus prompts guardados para reutilizar.",
+  },
+  avatares: {
+    title: "Avatares",
+    subtitle: "Guarda identidades y referencias para mantener continuidad entre videos.",
   },
   configuracion: {
     title: "Configuración",
@@ -67,19 +67,19 @@ function DashboardPage() {
 
   return (
     <PromptProvider>
-      <div className="min-h-screen w-full flex text-white">
+      <div className="app-shell min-h-screen w-full flex text-white">
         <Sidebar active={active} onChange={setActive} />
-        <main className="flex-1 min-w-0 px-4 lg:px-6 pb-10 pt-2">
-          <TopHeader />
-          {active !== "generar-prompt" && (
+        <main className="app-main flex-1 min-w-0 px-4 lg:px-6 pb-10 pt-2">
+          {active !== "dashboard" && <TopHeader />}
+          {active !== "dashboard" && active !== "generar-prompt" && (
             <SectionHeader title={headers[active].title} subtitle={headers[active].subtitle} />
           )}
           {active === "dashboard" && <DashboardView onNavigate={setActive} />}
           {active === "generar-prompt" && <GenerarPromptView />}
           {active === "generar-imagen" && <GenerarImagenView />}
-          {active === "generar-video" && <GenerarVideoView />}
           {active === "historial" && <HistorialView />}
           {active === "favoritos" && <FavoritosView />}
+          {active === "avatares" && <AvataresView />}
           {active === "configuracion" && <ConfiguracionView />}
           {active === "ayuda" && <AyudaView />}
         </main>

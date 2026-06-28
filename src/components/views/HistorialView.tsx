@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Copy, Pencil, Trash2, Filter, GitCompare } from "lucide-react";
+import { Search, Copy, Pencil, Trash2, Filter, GitCompare, Star, Check } from "lucide-react";
 import templeImg from "@/assets/temple.jpg";
 import castleImg from "@/assets/castle.jpg";
 import mountainImg from "@/assets/mountain.jpg";
@@ -71,11 +71,13 @@ const modelFilters: { key: "all" | AiModel; label: string }[] = [
 ];
 
 export function HistorialView() {
-  const { history } = usePromptStore();
+  const { history, toggleFavorite, isFavorite, removeHistoryItem, loadHistoryItem, clearHistory } =
+    usePromptStore();
   const [filter, setFilter] = useState("Todos");
   const [modelFilter, setModelFilter] = useState<"all" | AiModel>("all");
   const [q, setQ] = useState("");
   const [compareOpen, setCompareOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const all = useMemo<HistoryItem[]>(() => [...history, ...seed], [history]);
 
@@ -89,6 +91,16 @@ export function HistorialView() {
       ),
     [all, filter, modelFilter, q],
   );
+
+  const copy = async (it: HistoryItem) => {
+    try {
+      await navigator.clipboard.writeText(it.prompts.principal);
+      setCopiedId(it.id);
+      setTimeout(() => setCopiedId(null), 1200);
+    } catch {
+      /* no-op */
+    }
+  };
 
   return (
     <motion.section {...fade} transition={{ duration: 0.4 }} className="glass-panel p-5">
@@ -127,6 +139,14 @@ export function HistorialView() {
           >
             <GitCompare className="h-3.5 w-3.5" />
             Comparar modelos
+          </button>
+          <button
+            onClick={clearHistory}
+            disabled={history.length === 0}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-medium text-slate-300 bg-white/[0.04] ring-1 ring-white/10 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40 transition"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Limpiar
           </button>
         </div>
       </div>
@@ -169,9 +189,38 @@ export function HistorialView() {
                 <span className="text-emerald-300/90">Fidelidad {it.score}%</span>
               </div>
               <div className="mt-2 flex items-center gap-3 text-slate-400">
-                <Copy className="h-3.5 w-3.5 hover:text-white cursor-pointer" />
-                <Pencil className="h-3.5 w-3.5 hover:text-white cursor-pointer" />
-                <Trash2 className="h-3.5 w-3.5 text-rose-400/80 hover:text-rose-300 cursor-pointer" />
+                <button
+                  onClick={() => copy(it)}
+                  className="hover:text-white"
+                  aria-label="Copiar prompt"
+                >
+                  {copiedId === it.id ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                </button>
+                <button
+                  onClick={() => loadHistoryItem(it)}
+                  className="hover:text-white"
+                  aria-label="Cargar prompt"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => toggleFavorite(it)}
+                  className={isFavorite(it.id) ? "text-amber-300" : "hover:text-amber-300"}
+                  aria-label={isFavorite(it.id) ? "Quitar de favoritos" : "Agregar a favoritos"}
+                >
+                  <Star className={isFavorite(it.id) ? "h-3.5 w-3.5 fill-amber-300" : "h-3.5 w-3.5"} />
+                </button>
+                <button
+                  onClick={() => removeHistoryItem(it.id)}
+                  className="text-rose-400/80 hover:text-rose-300"
+                  aria-label="Eliminar del historial"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
           </div>
